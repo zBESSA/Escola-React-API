@@ -1,76 +1,59 @@
-import React, {useState, useEffect} from "react";
+import React, {Component} from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './CrudCarometro.css';
 import Header from "../template/Header"
+import Main from "../template/Main"
 
 const urlAPI = 'http://localhost:5014/api/aluno';
 const urlCurso = "http://localhost:5014/api/curso";
 
-const getRandomLetter = () => {
-    return Math.random().toString(36).substring(2, 9);
-}
+const titulo = "Carômetro do alunos cadastrados";
+
+const AleatCarometro = () => {return Math.random().toString(36).substring(2, 9);}
 
 export default function CrudCarometro(props) {
     const initialState = {
-        curso: { id: 0, codCurso: "", nomeCurso: "", periodo: "" },
+        curso: { id: 0, codCurso: "",nomeCurso: "",periodo: "" },
         listaAlunos: [],
         listaCursos: [],
     }
 
-    const title = "Carômetro dos Alunos";
     const [listaAlunos, setListaAlunos] = useState(initialState.listaAlunos);
     const [listaCursos, setListaCursos] = useState(initialState.listaCursos);
     const [curso, setCurso] = useState(initialState.curso);
 
+
     useEffect(() => {
         axios(urlCurso)
             .then((resp) => setListaCursos(resp.data))
-            .catch((err) => {
-                console.log(err);
+        },[]
+    );
 
-                //sendMultipleErrorPopUp(err);
-            });
-    }, []);
-
-    const atualizarListaAlunos = async (event) => {
-        const codCurso = event.target.value;
-        if (event.target.value === "") {
-            setListaAlunos(initialState.listaAlunos);
-            setCurso(initialState.curso);
-            return
-        }
-        curso.codCurso = Number(codCurso)
-        const listaDeAlunos = await getListaAlunosDoCurso(curso.codCurso)
-        if(!Array.isArray(listaDeAlunos)) return
-
-        setListaAlunos(listaDeAlunos)
+    const filtroDeAlunos = async (event) => {
+        curso.codCurso = event.target.value;
         setCurso(curso)
-    }
 
-    const getListaAlunosDoCurso = async (codCurso) => {
-        return await axios(urlAPI)
+        const ListaAlunos = await axios(urlAPI)
         .then((resp) => {
             const listaDeAlunos = resp.data;
             return listaDeAlunos.filter(
-                (aluno) => aluno.codCurso === codCurso
+                (aluno) => aluno.codCurso == curso.codCurso
             );
         })
-        .catch((err) => {
-            console.log(err);
 
-            //sendMultipleErrorPopUp(err);
-        });
+        setListaAlunos(ListaAlunos)
     }
 
     const renderSelect = () => {
         return (
-            <div className="select-container">
+            <div className="areacurso">
                 <label> Curso: </label>
-                <select className="selectCarometro" value={curso.codCurso}  onChange={e => { atualizarListaAlunos(e)}} required>
-                    <option disabled={true} key="" value="">  -- Escolha um curso -- </option>
+                <select className="selectCarometro" value={curso.codCurso}  onChange={e => { filtroDeAlunos(e)}} required>
+                <option  value="" key="" disabled={true}>  Selecione o curso desejado... </option>
                     {listaCursos.map( (curso) =>
                             <option  key={curso.id} name="codCurso" value={curso.codCurso}>
-                                { curso.codCurso } - { curso.nomeCurso } : { curso.periodo }
+                                { curso.codCurso } / { curso.nomeCurso } / { curso.periodo }
                             </option>
                     )}
                 </select>
@@ -80,27 +63,27 @@ export default function CrudCarometro(props) {
 
 
     const renderCards = () =>(
-        <div className="card-row">
-            {Array.isArray(listaAlunos) && listaAlunos.length > 0 ?
+        <div className="grupoDasCards">
+            {
             listaAlunos.map((aluno) => (
                 <div key={aluno.id} className="card draw-border">
-                    <img  className="card__image" src={`https://avatars.dicebear.com/api/big-smile/${getRandomLetter()}.svg`} alt={`Avatar de `+ aluno.nome}/>
-                    <span className="card-title">{aluno.nome}</span>
-                    <span className="card-description">RA: {aluno.ra} | Curso: {aluno.codCurso}</span>
+                    <img  className="cardFoto" src={`https://avatars.dicebear.com/api/miniavs/${AleatCarometro()}.svg`} alt={`Avatar de `+ aluno.nome}/>
+                    <span className="cardDados">Ra: {aluno.ra}</span>
+                    <span className="cardNome">{aluno.nome}</span>
+                    <span className="cardDados">Cursando: {aluno.codCurso}</span>
                 </div>
-            )) : null}
+            ))}
         </div>
     )
 
     return (
         <div className="container carometro">
-            <Header title={title} />
-            {renderSelect()}
-            <main>
+            <Main title={titulo}>
                 <div className="card-container">
+                    {renderSelect()}
                     {renderCards()}
                 </div>
-            </main>
+            </Main>
         </div>
     );
 }
